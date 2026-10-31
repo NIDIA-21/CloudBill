@@ -11,6 +11,7 @@ import {
   Download,
   ArrowRight,
   Sparkles,
+  ShoppingBag,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -52,17 +53,26 @@ export const CustomerDashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 rounded-3xl p-8 text-white shadow-xl">
-        <div className="flex items-center gap-2 text-blue-200 text-xs font-semibold uppercase tracking-wider mb-2">
-          <Sparkles className="h-4 w-4" />
-          <span>Customer Self-Service Hub</span>
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 rounded-3xl p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-blue-200 text-xs font-semibold uppercase tracking-wider mb-2">
+            <Sparkles className="h-4 w-4" />
+            <span>Customer Self-Service Hub</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Welcome back, {user?.firstName} {user?.lastName}!
+          </h2>
+          <p className="text-blue-100 text-sm mt-1 max-w-xl">
+            Manage your software subscriptions, monitor upcoming recurring billing dates, view and download your official PDF invoices.
+          </p>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-          Welcome back, {user?.firstName} {user?.lastName}!
-        </h2>
-        <p className="text-blue-100 text-sm mt-1 max-w-xl">
-          Manage your software subscriptions, monitor upcoming recurring billing dates, view and download your official PDF invoices.
-        </p>
+        <Link
+          to="/portal/catalog"
+          className="px-5 py-3 bg-white text-blue-900 hover:bg-blue-50 rounded-2xl font-bold text-xs inline-flex items-center gap-2 shadow-lg transition shrink-0"
+        >
+          <ShoppingBag className="h-4 w-4 text-blue-600" />
+          <span>Subscribe to Software 🚀</span>
+        </Link>
       </div>
 
       {/* KPI Cards */}
@@ -119,14 +129,35 @@ export const CustomerDashboard: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <h3 className="font-bold text-slate-900 text-sm">Your Active Software Plans</h3>
-          <Link to="/portal/subscriptions" className="text-xs text-blue-600 font-semibold hover:underline">
-            Manage all
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/portal/catalog" className="text-xs font-bold text-blue-600 hover:text-blue-700">
+              + Buy New Plan
+            </Link>
+            <span className="text-slate-300">|</span>
+            <Link to="/portal/subscriptions" className="text-xs text-slate-500 font-semibold hover:underline">
+              Manage all
+            </Link>
+          </div>
         </div>
 
         <div className="divide-y divide-slate-100 text-xs">
-          {data?.subscriptions?.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">No active subscriptions at this time.</div>
+          {!data?.subscriptions || data?.subscriptions?.length === 0 ? (
+            <div className="p-10 text-center bg-slate-50/40">
+              <div className="inline-flex h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 items-center justify-center mb-3">
+                <ShoppingBag className="h-6 w-6" />
+              </div>
+              <h4 className="font-bold text-slate-900 text-sm">No active software subscriptions yet</h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-4">
+                Explore our enterprise software suites, choose your brand variant (including Standard, Premium, or Odoo Brand), and activate in 1 click.
+              </p>
+              <Link
+                to="/portal/catalog"
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition shadow-sm shadow-blue-500/20"
+              >
+                <span>Browse Software Catalog & Subscribe</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           ) : (
             data?.subscriptions?.map((sub: any) => (
               <div key={sub.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition">
@@ -163,7 +194,7 @@ export const CustomerDashboard: React.FC = () => {
         </div>
 
         <div className="divide-y divide-slate-100 text-xs">
-          {data?.recentInvoices?.length === 0 ? (
+          {!data?.recentInvoices || data?.recentInvoices?.length === 0 ? (
             <div className="p-8 text-center text-slate-400">No invoices issued yet.</div>
           ) : (
             data?.recentInvoices?.map((inv: any) => (

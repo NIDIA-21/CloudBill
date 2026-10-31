@@ -23,6 +23,7 @@ import {
   LogOut,
   Building2,
   ChevronRight,
+  ShoppingBag,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -66,6 +67,7 @@ export const Sidebar: React.FC = () => {
 
   const customerNavItems = [
     { label: 'Overview', path: '/portal/dashboard', icon: LayoutDashboard },
+    { label: 'Browse & Subscribe', path: '/portal/catalog', icon: ShoppingBag, badge: 'Buy' },
     { label: 'My Subscriptions', path: '/portal/subscriptions', icon: RefreshCw },
     { label: 'My Invoices', path: '/portal/invoices', icon: Receipt },
     { label: 'Payment History', path: '/portal/payments', icon: CreditCard },

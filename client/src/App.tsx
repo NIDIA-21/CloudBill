@@ -31,6 +31,7 @@ import { SettingsPage } from './pages/admin/SettingsPage';
 
 // Customer Pages
 import { CustomerDashboard } from './pages/customer/CustomerDashboard';
+import { CustomerCatalog } from './pages/customer/CustomerCatalog';
 import { CustomerSubscriptions } from './pages/customer/CustomerSubscriptions';
 import { CustomerInvoices } from './pages/customer/CustomerInvoices';
 import { CustomerPayments } from './pages/customer/CustomerPayments';
@@ -99,6 +100,7 @@ export const App: React.FC = () => {
           <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
             <Route path="/portal" element={<AppLayout title="Customer Self-Service Portal" />}>
               <Route path="dashboard" element={<CustomerDashboard />} />
+              <Route path="catalog" element={<CustomerCatalog />} />
               <Route path="subscriptions" element={<CustomerSubscriptions />} />
               <Route path="invoices" element={<CustomerInvoices />} />
               <Route path="payments" element={<CustomerPayments />} />
