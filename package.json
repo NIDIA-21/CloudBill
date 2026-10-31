@@ -19,5 +19,8 @@
     "odoo-variant"
   ],
   "author": "Brightloop Engineering Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "playwright-core": "^1.64.1"
+  }
 }
