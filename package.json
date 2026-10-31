@@ -1,0 +1,23 @@
+{
+  "name": "brightloop-subscription-management",
+  "version": "1.0.0",
+  "description": "Brightloop Software - Complete Enterprise Subscription & Billing Management System for Makeathon 9.0",
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "db:push": "cd server && npx prisma db push",
+    "db:seed": "cd server && npx tsx prisma/seed.ts",
+    "test:workflow": "cd server && npx tsx test-workflow.ts",
+    "benchmark": "cd server && npx tsx benchmark.ts",
+    "build:client": "cd client && npm run build"
+  },
+  "keywords": [
+    "subscription-management",
+    "recurring-billing",
+    "makeathon",
+    "invoicing",
+    "odoo-variant"
+  ],
+  "author": "Brightloop Engineering Team",
+  "license": "MIT"
+}
