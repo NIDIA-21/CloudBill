@@ -60,7 +60,7 @@ export class BillingService {
     return results;
   }
 
-  private async processSubscriptionBilling(subscription: any, now: Date, triggeredBy?: string) {
+  public async processSubscriptionBilling(subscription: any, now: Date, triggeredBy?: string) {
     const periodStart = new Date(subscription.nextBillingDate);
     const periodEnd = calculatePeriodEnd(periodStart, subscription.plan.billingFrequency);
 

@@ -36,7 +36,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/', authenticate, authorize('admin', 'staff'), async (req: AuthRequest, res: Response) => {
+router.post('/', authenticate, authorize('admin', 'staff', 'customer'), async (req: AuthRequest, res: Response) => {
   try {
     const { invoiceId, method, amount, transactionRef, note, paymentDate } = req.body;
     if (!invoiceId || !method || amount === undefined) {

@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../utils/prisma';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
+import { BillingService } from '../services/billingService';
 import { getPagination, paginatedResponse, getNextSequence, toNumber, calculateLineTotal, calculateTaxAmount, calculateDiscountAmount } from '../utils/helpers';
 
 const router = Router();
@@ -163,6 +164,140 @@ router.patch('/:id/status', authenticate, async (req: AuthRequest, res: Response
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update subscription' });
+  }
+});
+
+
+// Customer Self-Service: Purchase & activate software subscription
+router.post('/purchase', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const customerId = req.user!.role === 'customer' ? req.user!.id : (req.body.customerId || req.user!.id);
+    const { productId, variantId, planId, taxRuleId, discountCode, quantity = 1 } = req.body;
+
+    if (!productId || !planId) {
+      return res.status(400).json({ error: 'Product and Plan selection are required' });
+    }
+
+    const [product, plan] = await Promise.all([
+      prisma.product.findUnique({ where: { id: productId }, include: { variants: true } }),
+      prisma.subscriptionPlan.findUnique({ where: { id: planId } }),
+    ]);
+
+    if (!product) return res.status(400).json({ error: 'Product not found' });
+    if (!plan) return res.status(400).json({ error: 'Subscription plan not found' });
+
+    let variantPrice = 0;
+    if (variantId) {
+      const variant = await prisma.productVariant.findUnique({ where: { id: variantId } });
+      if (variant) variantPrice = toNumber(variant.additionalPrice);
+    }
+
+    const unitPrice = toNumber(product.salesPrice);
+    const qty = Math.max(1, Number(quantity) || 1);
+    const lineAmount = calculateLineTotal(unitPrice, variantPrice, qty);
+
+    let discountId: string | null = null;
+    let discountAmount = 0;
+    if (discountCode && discountCode.trim()) {
+      const code = discountCode.trim().toUpperCase();
+      const discount = await prisma.discount.findFirst({
+        where: { code, status: 'active' },
+      });
+      if (discount) {
+        discountId = discount.id;
+        discountAmount = calculateDiscountAmount(lineAmount, toNumber(discount.value), discount.type);
+      }
+    }
+
+    let activeTaxRuleId = taxRuleId;
+    let taxRate = 18;
+    let taxType = 'percentage';
+    if (!activeTaxRuleId) {
+      const defaultTax = await prisma.taxRule.findFirst({ where: { status: 'active' } });
+      if (defaultTax) {
+        activeTaxRuleId = defaultTax.id;
+        taxRate = toNumber(defaultTax.rate);
+        taxType = defaultTax.type;
+      }
+    } else {
+      const taxRule = await prisma.taxRule.findUnique({ where: { id: activeTaxRuleId } });
+      if (taxRule) {
+        taxRate = toNumber(taxRule.rate);
+        taxType = taxRule.type;
+      }
+    }
+
+    const taxableAmount = Math.max(0, lineAmount - discountAmount);
+    const taxAmount = calculateTaxAmount(taxableAmount, taxRate, taxType);
+    const total = taxableAmount + taxAmount;
+
+    const number = await getNextSequence(prisma, 'subscription', 'SUB');
+    const now = new Date();
+
+    const subscription = await prisma.subscription.create({
+      data: {
+        number,
+        customerId,
+        planId,
+        discountId,
+        startDate: now,
+        endDate: plan.availabilityEnd,
+        nextBillingDate: now,
+        paymentTermDays: 15,
+        subtotal: lineAmount,
+        discountAmount,
+        taxAmount,
+        total,
+        status: 'active',
+        items: {
+          create: [
+            {
+              productId,
+              variantId: variantId || null,
+              taxRuleId: activeTaxRuleId || null,
+              quantity: qty,
+              unitPrice,
+              variantPrice,
+              taxAmount,
+              lineTotal: lineAmount + taxAmount,
+            },
+          ],
+        },
+      },
+      include: {
+        customer: true,
+        plan: true,
+        items: { include: { product: true, variant: true, taxRule: true } },
+        discount: { include: { discountProducts: true } },
+      },
+    });
+
+    // Run immediate billing to generate the first invoice
+    const billingService = new BillingService(prisma);
+    await billingService.processSubscriptionBilling(subscription, now, customerId);
+
+    // Fetch the generated invoice and auto-confirm it
+    const invoice = await prisma.invoice.findFirst({
+      where: { subscriptionId: subscription.id },
+      orderBy: { createdAt: 'desc' },
+      include: { items: true },
+    });
+
+    if (invoice && invoice.status === 'draft') {
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: { status: 'confirmed' },
+      });
+    }
+
+    res.status(201).json({
+      message: 'Subscription successfully created and activated!',
+      subscription,
+      invoice,
+    });
+  } catch (error: any) {
+    console.error('Purchase subscription error:', error);
+    res.status(500).json({ error: error.message || 'Failed to complete subscription purchase' });
   }
 });
 
